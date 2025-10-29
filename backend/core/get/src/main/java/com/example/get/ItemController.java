@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ItemController {
     private final ItemRepository repository;
 
-    @GetMapping("/item")
+    @GetMapping("/item/{id}")
     public ResponseEntity<Optional<Item>> getItemById(@PathVariable Long id) {
         return ResponseEntity.ok(repository.findById(id));
     }

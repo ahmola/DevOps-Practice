@@ -2,11 +2,17 @@ server:
     port: 8086
 spring:
     application:
-        name: get
+        name: crud-get
     datasource:
         url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
         username: ${DB_USER}
         password: ${DB_PASSWORD}
+    sql:
+        init:
+            mode: always          # 앱 시작 시 SQL 실행 허용
+            encoding: UTF-8
+            schema-locations: classpath:schema.sql
+            data-locations: classpath:data.sql
     jpa:
         hibernate:
             ddl-auto: update

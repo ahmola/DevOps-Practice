@@ -17,7 +17,7 @@ public class ItemController {
     private final ItemRepository repository;
 
     @Transactional
-    @DeleteMapping
+    @DeleteMapping("/item/{id}")
     public ResponseEntity<Boolean> deleteItem(@PathVariable(name="id") Long id){
         try {
             repository.deleteById(id);

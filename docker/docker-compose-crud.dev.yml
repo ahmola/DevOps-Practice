@@ -21,7 +21,7 @@ services:
       retries: 10
       start_period: 10s
 
-  get:
+  crud-get:
     depends_on:
       mysql:
         condition: service_healthy
@@ -32,12 +32,12 @@ services:
     build: 
       context: ../backend/core/get
       dockerfile: dockerfile
-    image: crud-get
+    image: crud-get:latest
     container_name: crud-get
     ports:
       - "8086:8086"
 
-  post:
+  crud-post:
     depends_on:
       mysql:
         condition: service_healthy
@@ -48,12 +48,12 @@ services:
     build: 
       context: ../backend/core/post
       dockerfile: dockerfile
-    image: crud-post
+    image: crud-post:latest
     container_name: crud-post
     ports:
       - "8087:8087"
 
-  put:
+  crud-put:
     depends_on:
       mysql:
         condition: service_healthy
@@ -64,12 +64,12 @@ services:
     build:
       context: ../backend/core/put
       dockerfile: dockerfile
-    image: crud-put
+    image: crud-put:latest
     container_name: crud-put
     ports:
       - "8088:8088"
 
-  delete:
+  crud-delete:
     depends_on:
       mysql:
         condition: service_healthy
@@ -80,7 +80,7 @@ services:
     build:
       context: ../backend/core/delete
       dockerfile: dockerfile
-    image: crud-delete
+    image: crud-delete:latest
     container_name: crud-delete
     ports:
       - "8089:8089"

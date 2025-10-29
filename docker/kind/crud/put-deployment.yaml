@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose-crud.yml --controller deployment --volumes persistentVolumeClaim
+    kompose.version: 1.37.0 (HEAD)
+  labels:
+    io.kompose.service: put
+  name: put
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: put
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose-crud.yml --controller deployment --volumes persistentVolumeClaim
+        kompose.version: 1.37.0 (HEAD)
+      labels:
+        io.kompose.service: put
+    spec:
+      containers:
+        - envFrom:
+            - configMapRef:
+                name: env
+          image: crud-put:latest
+          imagePullPolicy: IfNotPresent
+          name: crud-put
+          ports:
+            - containerPort: 8088
+              protocol: TCP
+      restartPolicy: Always
