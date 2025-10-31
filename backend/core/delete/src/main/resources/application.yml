@@ -3,6 +3,14 @@ server:
 spring:
     application:
         name: crud-delete
+    cloud:
+        consul:
+            host: consul
+            port: 8500
+            discovery:
+                prefer-ip-address: true
+                health-check-path: /actuator/health
+                health-check-interval: 10s
     datasource:
         url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
         username: ${DB_USER}
@@ -14,3 +22,13 @@ spring:
         properties:
             hibernate:
                 dialect: org.hibernate.dialect.MySQLDialect
+
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health, info
+    endpoint:
+        health:
+            show-details: always

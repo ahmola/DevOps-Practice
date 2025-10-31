@@ -1,6 +1,17 @@
-version: '4'
-
 services:
+  nginx:
+    depends_on:
+      crud-gateway:
+        condition: service_healthy
+    networks:
+      - crud
+    image: nginx:1.29-alpine
+    container-name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ../backend/edge/balancer/nginx.conf:/etc/nginx/nginx.conf:ro
+    
   mysql:
     environment:
       - MYSQL_ROOT_PASSWORD=1234
@@ -21,69 +32,124 @@ services:
       retries: 10
       start_period: 10s
 
+  consul:
+    image: consul:1.15
+    container_name: consul
+    command: consul agent -dev -client=0.0.0.0
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    networks:
+      - crud
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8500/v1/status/leader"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+  
+  crud-gateway:
+    depends_on:
+      consul:
+        condition: service_healthy
+      crud-get:
+        condition: service_healthy
+      crud-post:
+        condition: service_healthy
+      crud-put:
+        condition: service_healthy
+      crud-delete:
+        condition: service_healthy
+    networks:
+      - crud
+    image: crud-gateway:latest
+    container_name: crud-gateway
+    ports: 
+      - "8080:8080"
+
   crud-get:
     depends_on:
       mysql:
+        condition: service_healthy
+      consul:
         condition: service_healthy
     env_file:
       - .env
     networks:
       - crud
-    build: 
-      context: ../backend/core/get
-      dockerfile: dockerfile
     image: crud-get:latest
     container_name: crud-get
     ports:
       - "8086:8086"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
   crud-post:
     depends_on:
       mysql:
         condition: service_healthy
+      consul:
+        condition: service_healthy
     env_file:
       - .env
     networks:
       - crud
-    build: 
-      context: ../backend/core/post
-      dockerfile: dockerfile
     image: crud-post:latest
     container_name: crud-post
     ports:
       - "8087:8087"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
   crud-put:
     depends_on:
       mysql:
         condition: service_healthy
-    env_file:
-      - .env
-    networks:
-      - crud
-    build:
-      context: ../backend/core/put
-      dockerfile: dockerfile
-    image: crud-put:latest
-    container_name: crud-put
-    ports:
-      - "8088:8088"
-
-  crud-delete:
-    depends_on:
-      mysql:
+      consul:
         condition: service_healthy
     env_file:
       - .env
     networks:
       - crud
-    build:
-      context: ../backend/core/delete
-      dockerfile: dockerfile
+    image: crud-put:latest
+    container_name: crud-put
+    ports:
+      - "8088:8088"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  crud-delete:
+    depends_on:
+      mysql:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - crud
     image: crud-delete:latest
     container_name: crud-delete
     ports:
       - "8089:8089"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
 networks:
   crud:
