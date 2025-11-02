@@ -18,6 +18,7 @@ public class ItemController {
     @Transactional
     @PostMapping
     public ResponseEntity<Item> createItem(@RequestBody Item item) {
+        log.info("Create Item : ", item);
         return ResponseEntity.ok(repository.save(item));
     }
     

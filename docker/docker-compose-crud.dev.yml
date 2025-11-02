@@ -1,17 +1,4 @@
-services:
-  nginx:
-    depends_on:
-      crud-gateway:
-        condition: service_healthy
-    networks:
-      - crud
-    image: nginx:1.29-alpine
-    container-name: nginx
-    ports:
-      - "80:80"
-    volumes:
-      - ../backend/edge/balancer/nginx.conf:/etc/nginx/nginx.conf:ro
-    
+services:    
   mysql:
     environment:
       - MYSQL_ROOT_PASSWORD=1234
@@ -47,31 +34,29 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
-  
-  crud-gateway:
+
+  config-server:
     depends_on:
       consul:
         condition: service_healthy
-      crud-get:
-        condition: service_healthy
-      crud-post:
-        condition: service_healthy
-      crud-put:
-        condition: service_healthy
-      crud-delete:
+      mysql:
         condition: service_healthy
     networks:
       - crud
-    image: crud-gateway:latest
-    container_name: crud-gateway
-    ports: 
-      - "8080:8080"
+    image: config-server:latest
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   crud-get:
     depends_on:
-      mysql:
-        condition: service_healthy
-      consul:
+      config-server:
         condition: service_healthy
     env_file:
       - .env
@@ -90,9 +75,7 @@ services:
 
   crud-post:
     depends_on:
-      mysql:
-        condition: service_healthy
-      consul:
+      config-server:
         condition: service_healthy
     env_file:
       - .env
@@ -111,9 +94,7 @@ services:
 
   crud-put:
     depends_on:
-      mysql:
-        condition: service_healthy
-      consul:
+      config-server:
         condition: service_healthy
     env_file:
       - .env
@@ -132,9 +113,7 @@ services:
 
   crud-delete:
     depends_on:
-      mysql:
-        condition: service_healthy
-      consul:
+      config-server:
         condition: service_healthy
     env_file:
       - .env
@@ -150,6 +129,42 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
+  
+  crud-gateway:
+    depends_on:
+      crud-get:
+        condition: service_healthy
+      crud-post:
+        condition: service_healthy
+      crud-put:
+        condition: service_healthy
+      crud-delete:
+        condition: service_healthy
+    networks:
+      - crud
+    image: crud-gateway:latest
+    container_name: crud-gateway
+    ports: 
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 150s
+
+  nginx:
+    depends_on:
+      crud-gateway:
+        condition: service_healthy
+    networks:
+      - crud
+    image: nginx:1.29-alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ../backend/edge/balancer/nginx.conf:/etc/nginx/nginx.conf:ro
 
 networks:
   crud:

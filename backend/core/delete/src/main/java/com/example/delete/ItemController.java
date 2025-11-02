@@ -19,10 +19,13 @@ public class ItemController {
     @Transactional
     @DeleteMapping("/item/{id}")
     public ResponseEntity<Boolean> deleteItem(@PathVariable(name="id") Long id){
+        log.info("Delete Item : {}", id);
         try {
             repository.deleteById(id);
+            log.info("Item ID {} is deleted", id);
             return ResponseEntity.ok(Boolean.TRUE);
         } catch (Exception e) {
+            log.error("Failed to Delete Item ID {}, cause = ", id, e.toString());
             return new ResponseEntity<>(Boolean.FALSE, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

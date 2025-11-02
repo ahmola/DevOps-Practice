@@ -3,7 +3,12 @@ set -e
 
 BASE_DIR=$(cd "$(dirname "$0")" && pwd)
 
-echo "🧱 Gradle build start..."
+echo "🧱 Container build start..."
+
+echo "🚀 Start build config-server"
+cd $BASE_DIR/../backend/edge/config && ./gradlew clean build -x test --no-daemon
+docker build --no-cache -t config-server -f dockerfile .
+echo "✅ config-server docker build complete."
 
 echo "🚀 Start build crud-get"
 cd $BASE_DIR/../backend/core/get && ./gradlew clean build -x test --no-daemon

@@ -19,13 +19,22 @@ import lombok.extern.slf4j.Slf4j;
 public class ItemController {
     private final ItemRepository repository;
 
+    @GetMapping("/all")
+    public ResponseEntity<List<Item>> getAllItem() {
+        log.info("All Item will be returned");
+        return ResponseEntity.ok(repository.findAll());
+    }
+    
+
     @GetMapping("/item/{id}")
     public ResponseEntity<Optional<Item>> getItemById(@PathVariable Long id) {
+        log.info("Get Item By ID {}", id);
         return ResponseEntity.ok(repository.findById(id));
     }
 
     @GetMapping
     public ResponseEntity<List<Item>> getItemByName(@RequestParam(name="name") String name) {
+        log.info("Get All Items By Name {}", name);
         return ResponseEntity.ok(repository.findAllByName(name));
     }
     
