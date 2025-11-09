@@ -1,0 +1,60 @@
+global:
+  scrape_interval: "5s"
+  evaluation_interval: "1m"
+  scrape_timeout: "3s"
+
+scrape_configs:
+  # self monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  
+  - job_name: 'grafana-agent'
+    static_configs:
+      - targets: ['grafana-agent:12345']
+  
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+  
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:80']
+
+  - job_name: 'consul'
+    static_configs:
+      - targets: ['consul:8500']
+  
+  - job_name: 'crud-mysql'
+    static_configs:
+      - targets: ['crud-mysql:3306']
+
+  - job_name: 'config-server'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['config-server:8888']
+
+  - job_name: 'crud-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['crud-gateway:8080']
+  
+  - job_name: 'crud-get'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['crud-get:8086']
+  
+  - job_name: 'crud-post'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['crud-post:8087']
+  
+  - job_name: 'crud-put'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['crud-put:8088']
+  
+  - job_name: 'crud-delete'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['crud-delete:8089']

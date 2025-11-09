@@ -1,0 +1,80 @@
+x-common-env: &common-env
+  environment:
+    - TZ=Asia/Seoul
+
+services:
+  prometheus:
+    <<: *common-env
+    image: prom/prometheus:latest
+    container_name: prometheus
+    networks:
+      - crud
+      - monitoring
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../backend/edge/monitoring/prometheus.yml:/etc/prometheus/config.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/config.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+
+  loki:
+      <<: *common-env
+      depends_on:
+        - prometheus
+      image: grafana/loki:2.9.2
+      container_name: loki
+      networks:
+        - crud # mac 환경(정확히는 M1칩 등)에서는 이걸 설정해주지 않으면 못찾음
+        - monitoring
+      ports:
+        - "3100:3100"
+      volumes:
+        - ../backend/edge/monitoring/loki-config.yml:/etc/loki/config.yml:ro
+        - ./loki-data:/loki
+      command: -config.file=/etc/loki/config.yml
+      user: "0"
+
+  grafana-agent:
+    <<: *common-env
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+    image: grafana/agent:latest
+    container_name: grafana-agent
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../backend/edge/monitoring/agent-config.yml:/etc/agent/config.yml:ro
+    command: --config.file=/etc/agent/config.yml
+  
+  grafana:
+    <<: *common-env
+    depends_on:
+      - loki
+      - grafana-agent
+    image: grafana/grafana:latest
+    container_name: grafana
+    networks:
+      - monitoring
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../backend/edge/monitoring/grafana-provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SERVER_DOMAIN=localhost
+      - TZ=Asia/Seoul
+
+networks:
+  crud:
+  monitoring:
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  loki-data:
