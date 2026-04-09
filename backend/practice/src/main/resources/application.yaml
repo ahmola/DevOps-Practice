@@ -1,0 +1,61 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: sample-backend
+  # database
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  # sql:  
+  #   init:
+  #     mode: always          # 앱 시작 시 SQL 실행 허용
+  #     encoding: UTF-8
+  #     schema-locations: classpath:schema.sql
+  #     data-locations: classpath:data.sql
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+# logging
+logging:
+  pattern:
+    console: >
+      {"time":"%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}",
+      "level":"%p",
+      "service":"${spring.application.name}",
+      "thread":"%t",
+      "logger":"%c",
+      "msg":"%m",
+      "trace":"%X{traceId:-}",
+      "span":"%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [traceId=%X{traceId:-} spanId=%X{spanId:-}] - %msg%n"}%n
+# monitoring
+management:
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0 # 100% 수집 (테스트용)
+  zipkin:
+    tracing:
+      endpoint: http://${ZIPKIN_HOST}:${ZIPKIN_PORT}/api/v2/spans
+  otlp:
+    tracing:
+      endpoint: http://${ZIPKIN_HOST}:${ZIPKIN_PORT}/api/v2/spans # OTel은 OTLP 설정도 공유 가능

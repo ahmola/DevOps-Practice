@@ -1,0 +1,11 @@
+# 1. build stage
+FROM gradle:8.10.1-jdk17 AS builder
+WORKDIR /app
+COPY . .
+RUN ./gradlew clean build -x test
+
+# 2. runtime stage
+FROM amazoncorretto:17-alpine
+WORKDIR /app
+COPY --from=builder /app/build/libs/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]

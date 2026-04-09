@@ -1,0 +1,120 @@
+services:
+  sample-mysql:
+    image: mysql:8.2.0
+    environment:
+      - MYSQL_DATABASE=prac
+      - MYSQL_PASSWORD=1234
+      - MYSQL_ROOT_PASSWORD=1234
+      - MYSQL_USER=user
+    ports:
+      - "3306:3306"
+    container_name: sample-mysql
+    networks:
+      - dev
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "sample-mysql", "-u", "root", "--password=1234" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  sample-backend:
+    build:
+      context: ./backend/practice
+      dockerfile: dockerfile
+    depends_on:
+      sample-mysql:
+        condition: service_healthy
+    networks:
+      - dev
+    image: sample-backend:latest
+    container_name: sample-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=sample-mysql
+      - DB_PORT=3306
+      - DB_USER=user
+      - DB_PASSWORD=1234
+      - DB_NAME=prac
+      - ZIPKIN_HOST=zipkin
+      - ZIPKIN_PORT=9411
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s 
+      timeout: 5s
+      retries: 5 
+      start_period: 5s
+
+  prometheus:
+    networks:
+      - dev
+    depends_on:
+      sample-backend:
+        condition: service_healthy
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./infra/monitoring/prometheus-config.yaml:/etc/prometheus/config.yaml # 설정 파일 마운트
+    ports:
+      - "9090:9090" # Prometheus 웹 UI 포트
+    command:
+      - '--config.file=/etc/prometheus/config.yaml'
+    healthcheck:
+      # prometheus 바이너리 자체를 이용해 헬스체크 수행
+      test: ["CMD", "prometheus", "tool", "check", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+  
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./infra/monitoring/loki-config.yaml:/etc/loki/config.yaml
+      # - loki-data:/loki
+    command: -config.file=/etc/loki/config.yaml
+    networks:
+      - dev
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro # Docker 로그 경로
+      - /var/run/docker.sock:/var/run/docker.sock               # Docker 소켓
+      - ./infra/monitoring/promtail-config.yaml:/etc/promtail/config.yaml          # 설정 파일
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - dev
+  
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=1234 # 초기 비밀번호 설정
+      - GF_USERS_ALLOW_SIGN_UP=false
+    # volumes:
+    #   - grafana-storage:/var/lib/grafana # 데이터 보존을 위한 볼륨
+    networks:
+      - dev
+    depends_on:
+      prometheus:
+        condition: service_healthy
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - dev
+
+networks:
+  dev:
+    driver: bridge

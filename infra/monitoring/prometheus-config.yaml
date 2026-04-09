@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 10s # 수집 주기
+
+scrape_configs:
+  - job_name: 'service-app'
+    metrics_path: '/actuator/prometheus' # 수집 경로
+    static_configs:
+      - targets: ['app:8080'] # Docker 사용 시 호스트 접근 경로

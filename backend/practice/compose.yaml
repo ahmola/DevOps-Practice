@@ -1,0 +1,49 @@
+services:
+  sample-mysql:
+    image: mysql:8.2.0
+    environment:
+      - MYSQL_DATABASE=prac
+      - MYSQL_PASSWORD=1234
+      - MYSQL_ROOT_PASSWORD=1234
+      - MYSQL_USER=user
+    ports:
+      - "3306:3306"
+    container_name: sample-mysql
+    networks:
+      - dev
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "sample-mysql", "-u", "root", "--password=1234" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  sample-backend:
+    build:
+      context: .
+      dockerfile: dockerfile
+    depends_on:
+      sample-mysql:
+        condition: service_healthy
+    networks:
+      - dev
+    image: sample-backend:latest
+    container_name: sample-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=sample-mysql
+      - DB_PORT=3306
+      - DB_USER=user
+      - DB_PASSWORD=1234
+      - DB_NAME=prac
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s 
+      timeout: 5s
+      retries: 5 
+      start_period: 5s
+
+networks:
+  dev:
+    driver: bridge
