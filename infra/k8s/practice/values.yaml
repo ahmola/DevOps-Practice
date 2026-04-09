@@ -1,0 +1,17 @@
+image:
+  repository: sample-backend
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  className: "nginx"
+  hosts:
+    - host: localhost
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
